@@ -79,4 +79,13 @@ mod tests {
 
         assert_ne!(first, second);
     }
+
+    #[test]
+    fn should_dereference_mutable() {
+        let mut uat = boxed::Box::new(5);
+
+        *uat = 7;
+
+        assert_eq!(*uat, 7);
+    }
 }
