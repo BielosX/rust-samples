@@ -1,25 +1,30 @@
-mod boxed {
-    use std::alloc::{GlobalAlloc, Layout, System};
+pub mod boxed {
+    use std::alloc::{alloc, dealloc};
+    use std::alloc::Layout;
     use std::fmt::{Debug, Formatter};
     use std::ops::{Deref, DerefMut};
 
-    pub struct Box<T>(*mut T, Layout);
+    pub struct Box<T>(*mut T);
 
     impl<T> Box<T> {
         pub fn new(value: T) -> Self {
             unsafe {
-                let layout = Layout::new::<T>();
-                let ptr = System.alloc(layout) as *mut T;
+                let layout = Self::layout();
+                let ptr = alloc(layout) as *mut T;
                 *ptr = value;
-                Box(ptr, layout)
+                Box(ptr)
             }
+        }
+
+        fn layout() -> Layout {
+            Layout::new::<T>()
         }
     }
 
     impl<T> Drop for Box<T> {
         fn drop(&mut self) {
             unsafe {
-                System.dealloc(self.0 as *mut u8, self.1);
+                dealloc(self.0 as *mut u8, Box::<T>::layout());
             }
         }
     }
