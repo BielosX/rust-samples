@@ -1,6 +1,6 @@
 pub mod boxed {
-    use std::alloc::{alloc, dealloc};
     use std::alloc::Layout;
+    use std::alloc::{alloc, dealloc};
     use std::fmt::{Debug, Formatter};
     use std::ops::{Deref, DerefMut};
 
