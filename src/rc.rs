@@ -213,11 +213,11 @@ mod tests {
 
     #[test]
     fn should_return_zero_strong_when_no_rc() {
-        let mut weak = Box::new(Weak::<i32>::new());
+        let weak: Weak<i32>;
 
         {
             let reference = Rc::new(7);
-            *weak = Rc::downgrade(&reference).clone();
+            weak = Rc::downgrade(&reference).clone();
         }
 
         assert_eq!(weak.strong_count(), 0);
