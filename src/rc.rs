@@ -1,10 +1,11 @@
 pub mod rc {
     use std::alloc::Layout;
     use std::alloc::{alloc, dealloc};
+    use std::fmt::{Debug, Display, Formatter};
     use std::ops::Deref;
     use std::ptr::null_mut;
 
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     struct Counter(*mut usize, *mut usize);
 
     impl Counter {
@@ -48,11 +49,31 @@ pub mod rc {
             }
         }
 
-        unsafe fn is_strong_positive(&self) -> bool {
-            if !self.0.is_null() {
-                *self.0 > 0
-            } else {
-                false
+        fn is_strong_positive(&self) -> bool {
+            unsafe {
+                if !self.0.is_null() {
+                    *self.0 > 0
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
+    impl Display for Counter {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            unsafe {
+                let strong = if self.0.is_null() {
+                    String::from("null")
+                } else {
+                    (*self.0).to_string()
+                };
+                let weak = if self.1.is_null() {
+                    String::from("null")
+                } else {
+                    (*self.1).to_string()
+                };
+                write!(f, "({}, {})", strong, weak)
             }
         }
     }
@@ -70,6 +91,7 @@ pub mod rc {
         }
     }
 
+    #[derive(Debug)]
     pub struct Rc<T>(*mut T, Counter);
 
     impl<T> Rc<T> {
@@ -103,6 +125,27 @@ pub mod rc {
             unsafe {
                 this.1.inc_weak();
                 Weak(this.0, this.1.clone())
+            }
+        }
+    }
+
+    impl<T: Eq> PartialEq<Self> for Rc<T> {
+        fn eq(&self, other: &Self) -> bool {
+            unsafe { *self.0 == *other.0 }
+        }
+    }
+
+    impl<T: Eq> Eq for Rc<T> {}
+
+    impl<T: Display> Display for Rc<T> {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            unsafe {
+                let value = if self.0.is_null() {
+                    String::from("null")
+                } else {
+                    (*self.0).to_string()
+                };
+                write!(f, "({}, {})", value, self.1)
             }
         }
     }
@@ -148,6 +191,17 @@ pub mod rc {
 
         pub fn weak_count(&self) -> usize {
             unsafe { *self.1 .1 }
+        }
+
+        pub fn upgrade(&self) -> Option<Rc<T>> {
+            unsafe {
+                if self.1.is_strong_positive() {
+                    self.1.inc_strong();
+                    Some(Rc(self.0, self.1.clone()))
+                } else {
+                    None
+                }
+            }
         }
     }
 
@@ -222,5 +276,22 @@ mod tests {
 
         assert_eq!(weak.strong_count(), 0);
         assert_eq!(weak.weak_count(), 1);
+    }
+
+    #[test]
+    fn should_return_none_on_upgrade_when_no_strong() {
+        let weak = Weak::<i32>::new();
+
+        assert_eq!(weak.upgrade(), None);
+    }
+
+    #[test]
+    fn should_return_reference_on_upgrade() {
+        let reference = Rc::<i32>::new(7);
+        let weak = Rc::downgrade(&reference);
+
+        let new_reference = weak.upgrade();
+
+        assert_eq!(new_reference.is_some(), true);
     }
 }
