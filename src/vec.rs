@@ -1,7 +1,8 @@
 pub mod vec {
     use std::alloc::{alloc, dealloc, Layout};
-    use std::ops::{Index, IndexMut};
+    use std::ops::{Index, IndexMut, Range};
     use std::ptr::null_mut;
+    use std::slice;
 
     const INIT_SIZE: usize = 4;
 
@@ -73,10 +74,31 @@ pub mod vec {
         }
     }
 
+    impl<T> Index<Range<usize>> for Vec<T> {
+        type Output = [T];
+
+        fn index(&self, index: Range<usize>) -> &Self::Output {
+            unsafe { slice::from_raw_parts(self.ptr.add(index.start), index.end - index.start) }
+        }
+    }
+
     impl<T> IndexMut<usize> for Vec<T> {
         fn index_mut(&mut self, index: usize) -> &mut Self::Output {
             unsafe { &mut *self.ptr.add(index) }
         }
+    }
+
+    #[macro_export]
+    macro_rules! vec {
+        ( $($x:expr),* ) => {
+            {
+                let mut temp = Vec::new();
+                $(
+                    temp.push($x);
+                )*
+                temp
+            }
+        };
     }
 }
 
@@ -103,5 +125,25 @@ mod tests {
 
         assert_eq!(vec[0], 1);
         assert_eq!(vec[1], 17);
+    }
+
+    #[test]
+    fn should_construct_vector() {
+        let vec = vec![1, 2, 3];
+
+        assert_eq!(vec[0], 1);
+        assert_eq!(vec[1], 2);
+        assert_eq!(vec[2], 3);
+    }
+
+    #[test]
+    fn should_return_range_slice() {
+        let vec = vec![1, 2, 3, 4];
+
+        let slice = &vec[1..3];
+
+        assert_eq!(slice.len(), 2);
+        assert_eq!(slice[0], 2);
+        assert_eq!(slice[1], 3);
     }
 }
