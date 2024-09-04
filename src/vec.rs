@@ -21,6 +21,10 @@ pub mod vec {
             }
         }
 
+        pub fn len(&self) -> usize {
+            self.size
+        }
+
         pub fn with_capacity(capacity: usize) -> Self {
             unsafe {
                 let ptr = Self::alloc(capacity);
@@ -61,7 +65,9 @@ pub mod vec {
     impl<T> Drop for Vec<T> {
         fn drop(&mut self) {
             unsafe {
-                dealloc(self.ptr as *mut u8, Self::array_layout(self.allocated));
+                if self.allocated > 0 {
+                    dealloc(self.ptr as *mut u8, Self::array_layout(self.allocated));
+                }
             }
         }
     }
@@ -104,6 +110,14 @@ pub mod vec {
 
 #[cfg(test)]
 mod tests {
+    use crate::vec::vec;
+
+    #[test]
+    fn should_return_empty() {
+        let vec: vec::Vec<i32> = vec::Vec::new();
+
+        assert_eq!(vec.len(), 0);
+    }
 
     #[test]
     fn should_return_value_at_index() {
