@@ -1,4 +1,6 @@
 mod either {
+    // Left -> Error
+    // Right -> Correct value
     pub enum Either<L, R> {
         Left(L),
         Right(R),
