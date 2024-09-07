@@ -25,6 +25,10 @@ pub mod vec {
             self.size
         }
 
+        pub fn allocated(&self) -> usize {
+            self.allocated
+        }
+
         pub fn with_capacity(capacity: usize) -> Self {
             unsafe {
                 let ptr = Self::alloc(capacity);
@@ -43,7 +47,9 @@ pub mod vec {
         pub fn push(&mut self, value: T) {
             unsafe {
                 let ptr = if self.allocated == 0 {
-                    Self::alloc(INIT_SIZE)
+                    self.allocated = INIT_SIZE;
+                    self.ptr = Self::alloc(INIT_SIZE);
+                    self.ptr
                 } else {
                     self.ptr
                 };
@@ -96,6 +102,16 @@ pub mod vec {
 
     #[macro_export]
     macro_rules! vec {
+        () => { Vec::new() };
+        ( $value:expr; $count:expr) => {
+            {
+                let mut temp = Vec::with_capacity($count);
+                for _ in 0..$count {
+                    temp.push($value);
+                }
+                temp
+            }
+        };
         ( $($x:expr),* ) => {
             {
                 let mut temp = Vec::new();
@@ -106,15 +122,17 @@ pub mod vec {
             }
         };
     }
+
+    pub(crate) use crate::vec;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::vec::vec;
+    use crate::vec::vec::{Vec, vec};
 
     #[test]
     fn should_return_empty() {
-        let vec: vec::Vec<i32> = vec::Vec::new();
+        let vec: Vec<i32> = Vec::new();
 
         assert_eq!(vec.len(), 0);
     }
@@ -143,7 +161,7 @@ mod tests {
 
     #[test]
     fn should_construct_vector() {
-        let vec = vec![1, 2, 3];
+        let vec: Vec<i32> = vec![1, 2, 3];
 
         assert_eq!(vec[0], 1);
         assert_eq!(vec[1], 2);
@@ -152,12 +170,27 @@ mod tests {
 
     #[test]
     fn should_return_range_slice() {
-        let vec = vec![1, 2, 3, 4];
+        let vec: Vec<i32> = vec![1, 2, 3, 4];
 
         let slice = &vec[1..3];
 
         assert_eq!(slice.len(), 2);
         assert_eq!(slice[0], 2);
         assert_eq!(slice[1], 3);
+    }
+
+    #[test]
+    fn should_support_empty_vec_macro() {
+        let vec: Vec<i32> = vec![];
+
+        assert_eq!(vec.len(), 0);
+    }
+
+    #[test]
+    fn should_allocate_with_macro() {
+        let vec: Vec<i32> = vec![5; 7];
+
+        assert_eq!(vec.len(), 7);
+        assert_eq!(vec.len(), 7);
     }
 }
