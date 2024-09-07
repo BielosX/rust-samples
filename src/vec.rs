@@ -128,7 +128,7 @@ pub mod vec {
 
 #[cfg(test)]
 mod tests {
-    use crate::vec::vec::{Vec, vec};
+    use crate::vec::vec::{vec, Vec};
 
     #[test]
     fn should_return_empty() {
