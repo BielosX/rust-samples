@@ -1,4 +1,4 @@
-mod either {
+pub mod either {
     // Left -> Error
     // Right -> Correct value
     pub enum Either<L, R> {

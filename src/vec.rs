@@ -114,7 +114,8 @@ pub mod vec {
         };
         ( $($x:expr),* ) => {
             {
-                let mut temp = Vec::new();
+                use crate::count_tts;
+                let mut temp = Vec::with_capacity(count_tts!($($x)*));
                 $(
                     temp.push($x);
                 )*
@@ -163,6 +164,7 @@ mod tests {
     fn should_construct_vector() {
         let vec: Vec<i32> = vec![1, 2, 3];
 
+        assert_eq!(vec.allocated(), 3);
         assert_eq!(vec[0], 1);
         assert_eq!(vec[1], 2);
         assert_eq!(vec[2], 3);
