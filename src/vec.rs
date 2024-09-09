@@ -63,6 +63,17 @@ pub mod vec {
             }
         }
 
+        pub fn from_elem(elem: T, count: usize) -> Self where T: Clone {
+            let mut vec: Vec<T> = Vec::with_capacity(count);
+            unsafe {
+                for i in 0..count {
+                    *vec.ptr.add(i) = elem.clone();
+                }
+            }
+            vec.size = count;
+            vec
+        }
+
         fn array_layout(capacity: usize) -> Layout {
             Layout::array::<T>(capacity).unwrap()
         }
@@ -104,13 +115,7 @@ pub mod vec {
     macro_rules! vec {
         () => { Vec::new() };
         ( $value:expr; $count:expr) => {
-            {
-                let mut temp = Vec::with_capacity($count);
-                for _ in 0..$count {
-                    temp.push($value);
-                }
-                temp
-            }
+            Vec::from_elem($value, $count)
         };
         ( $($x:expr),* ) => {
             {
