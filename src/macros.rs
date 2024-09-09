@@ -17,11 +17,20 @@ pub mod macros {
             }
         };
     }
+
+    #[macro_export]
+    macro_rules! create_func {
+        ($i:ident, $l:literal) => {
+            fn $i() -> String {
+                String::from($l)
+            }
+        };
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::vector;
+    use crate::{create_func, vector};
 
     #[test]
     fn should_create_vector_of_specified_type() {
@@ -30,5 +39,14 @@ mod tests {
         result.push(Box::new(7));
 
         assert_eq!(*result[0], 7);
+    }
+
+    #[test]
+    fn should_call_created_function() {
+        create_func!(func, "Hello");
+
+        let result = func();
+
+        assert_eq!(result, String::from("Hello"));
     }
 }
