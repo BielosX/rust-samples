@@ -10,9 +10,9 @@ pub mod macros {
 
     #[macro_export]
     macro_rules! vector {
-        ($t:ty) => {
+        ($t:ty, $l:literal) => {
             {
-                let vec: Vec<$t> = Vec::with_capacity(8);
+                let vec: Vec<$t> = Vec::with_capacity($l);
                 vec
             }
         };
@@ -34,10 +34,11 @@ mod tests {
 
     #[test]
     fn should_create_vector_of_specified_type() {
-        let mut result: Vec<Box<i32>> = vector!(Box<i32>);
+        let mut result: Vec<Box<i32>> = vector!(Box<i32>, 8);
 
         result.push(Box::new(7));
 
+        assert_eq!(result.capacity(), 8);
         assert_eq!(*result[0], 7);
     }
 
