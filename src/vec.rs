@@ -63,7 +63,10 @@ pub mod vec {
             }
         }
 
-        pub fn from_elem(elem: T, count: usize) -> Self where T: Clone {
+        pub fn from_elem(elem: T, count: usize) -> Self
+        where
+            T: Clone,
+        {
             let mut vec: Vec<T> = Vec::with_capacity(count);
             unsafe {
                 for i in 0..count {

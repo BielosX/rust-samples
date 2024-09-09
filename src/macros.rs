@@ -10,12 +10,10 @@ pub mod macros {
 
     #[macro_export]
     macro_rules! vector {
-        ($t:ty, $l:literal) => {
-            {
-                let vec: Vec<$t> = Vec::with_capacity($l);
-                vec
-            }
-        };
+        ($t:ty, $l:literal) => {{
+            let vec: Vec<$t> = Vec::with_capacity($l);
+            vec
+        }};
     }
 
     #[macro_export]
