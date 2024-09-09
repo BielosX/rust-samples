@@ -1,5 +1,6 @@
 pub mod vec {
     use std::alloc::{alloc, dealloc, Layout};
+    use std::marker::PhantomData;
     use std::ops::{Index, IndexMut, Range};
     use std::ptr::null_mut;
     use std::slice;
@@ -114,6 +115,52 @@ pub mod vec {
         }
     }
 
+    pub struct VecIterator<'a, T> {
+        ptr: *mut T,
+        offset: usize,
+        size: usize,
+        phantom: PhantomData<&'a ()>,
+    }
+
+    impl<'a, T: 'a> Iterator for VecIterator<'a, T> {
+        type Item = &'a T;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.offset < self.size {
+                let result = unsafe { Option::from(&*self.ptr.add(self.offset)) };
+                self.offset += 1;
+                result
+            } else {
+                None
+            }
+        }
+    }
+
+    impl<'a, T> IntoIterator for &'a Vec<T> {
+        type Item = &'a T;
+        type IntoIter = VecIterator<'a, T>;
+
+        fn into_iter(self) -> Self::IntoIter {
+            VecIterator {
+                ptr: self.ptr,
+                offset: 0,
+                size: self.size,
+                phantom: PhantomData::default(),
+            }
+        }
+    }
+
+    impl<T> FromIterator<T> for Vec<T> {
+        fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+            let mut result = Vec::new();
+            let mut iterator = iter.into_iter();
+            while let Some(value) = iterator.next() {
+                result.push(value);
+            }
+            result
+        }
+    }
+
     #[macro_export]
     macro_rules! vec {
         () => { Vec::new() };
@@ -202,5 +249,25 @@ mod tests {
 
         assert_eq!(vec.len(), 7);
         assert_eq!(vec.len(), 7);
+    }
+
+    #[test]
+    fn should_filter_out_values() {
+        let vec = vec![1, 2, 3, 4, 5];
+
+        let result = vec.into_iter().filter(|&x| *x > 3).count();
+
+        assert_eq!(result, 2);
+    }
+
+    #[test]
+    fn should_map_values() {
+        let vec = vec![1, 2];
+
+        let result: Vec<i32> = vec.into_iter().map(|&x| x * 2).collect::<Vec<_>>();
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0], 2);
+        assert_eq!(result[1], 4);
     }
 }

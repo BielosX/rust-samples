@@ -1,6 +1,4 @@
 pub mod macros {
-    use std::fmt::Display;
-
     #[macro_export]
     macro_rules! count_tts {
         () => { 0 };
