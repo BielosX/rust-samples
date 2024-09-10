@@ -40,6 +40,48 @@ pub mod either {
         }
     }
 
+    pub enum EitherIterator<'a, R> {
+        Ref(&'a R),
+        None,
+    }
+
+    impl<'a, T> Iterator for EitherIterator<'a, T> {
+        type Item = &'a T;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            match self {
+                EitherIterator::Ref(value) => {
+                    let result = Some(*value);
+                    *self = EitherIterator::None;
+                    result
+                }
+                EitherIterator::None => None,
+            }
+        }
+    }
+
+    impl<'a, L, R> IntoIterator for &'a Either<L, R> {
+        type Item = &'a R;
+        type IntoIter = EitherIterator<'a, R>;
+
+        fn into_iter(self) -> Self::IntoIter {
+            match &self {
+                Either::Left(_) => EitherIterator::None,
+                Either::Right(value) => EitherIterator::Ref(value),
+            }
+        }
+    }
+
+    impl<R> FromIterator<R> for Either<(), R> {
+        fn from_iter<T: IntoIterator<Item = R>>(iter: T) -> Self {
+            let mut iterator = iter.into_iter();
+            match iterator.next() {
+                None => Either::Left(()),
+                Some(value) => Either::Right(value),
+            }
+        }
+    }
+
     #[macro_export]
     macro_rules! try_either {
         ($expr:expr) => {
@@ -79,5 +121,24 @@ mod tests {
 
         assert_eq!(result.is_right(), true);
         assert_eq!(result.unwrap(), 20);
+    }
+
+    #[test]
+    fn should_map_inner_value() {
+        let value: Either<String, i32> = Either::right(10);
+
+        let result = value.into_iter().map(|&x| x * 2).collect::<Either<_,_>>();
+
+        assert_eq!(result.is_right(), true);
+        assert_eq!(result.unwrap(), 20);
+    }
+
+    #[test]
+    fn should_filter_inner_value() {
+        let value: Either<String, i32> = Either::right(10);
+
+        let result = value.into_iter().filter(|&x| *x > 10).collect::<Either<_,_>>();
+
+        assert_eq!(result.is_left(), true);
     }
 }
